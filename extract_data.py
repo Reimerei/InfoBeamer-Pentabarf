@@ -1,4 +1,5 @@
 #!/usr/bin/python
+#-*- coding: utf-8 -*-
 
 ###########################################################
 ##  This script gets the csv export from pentabarf, 
@@ -13,13 +14,13 @@ import codecs
 # parses csv file and returns array with data
 def load_csv(filename):
 
-	file = open(filename, 'rt')
+	file = codecs.open(filename, 'rt', "utf-8" )
 
 	reader = None
 	data = []
 
 	try:
-		reader = csv.reader(codecs.EncodedFile(file, 'utf-8', 'latin-1'))
+		reader = csv.reader(file)
 
 		for row in reader:
 			data.append(row)
@@ -106,6 +107,8 @@ data = load_csv("export.csv")
 del data[0]
 
 data_json = extract_json(data)
+
+print data_json.decode("iso-8859-2")
 
 f = open("node/data.json", "w")
 try:
