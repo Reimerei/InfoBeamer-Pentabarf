@@ -1,5 +1,4 @@
 #!/usr/bin/python
-#-*- coding: utf-8 -*-
 
 ###########################################################
 ##  This script gets the csv export from pentabarf, 
@@ -14,7 +13,7 @@ import codecs
 # parses csv file and returns array with data
 def load_csv(filename):
 
-	file = codecs.open(filename, 'rt', "utf-8" )
+	file = open(filename, 'rt')
 
 	reader = None
 	data = []
@@ -23,6 +22,7 @@ def load_csv(filename):
 		reader = csv.reader(file)
 
 		for row in reader:
+
 			data.append(row)
 		
 	finally:
@@ -62,7 +62,7 @@ def load_csv(filename):
 #5	Start time
 #6	End Time
 
-def extract_json(data) :
+def extract_data(data) :
 
 	display_data = []
 
@@ -91,27 +91,55 @@ def extract_json(data) :
 
 		else :
 
-			dump = 1
-			#print "Invalid row: " + str(row_count)
+			print "Invalid row: " + str(row_count)
 
 		row_count += 1
 
-	if (len(display_data) > 0) :
+	return display_data
 
-		data_json = json.dumps(sorted(display_data))
-		return repr(data_json)
+def write_json(filename, data):
 
-## Main Work
+	#w = codecs.open(filename , "w", "utf-8")
+	w = open(filename, "w")
 
+	#writer = codecs.getwriter('utf-8')(file(filename,'w'))
+
+	try:
+
+		w.write("[")
+
+		l=0
+
+		for line in data :
+
+			w.write("[")
+
+			c=0
+			for cell in line :
+
+				c += 1
+				if c < len(line) :
+					w.write("\"" + cell + "\", ")
+				else :
+					w.write("\"" + cell + "\"")
+
+			l += 1
+			if l < len(data) :
+				w.write("], ")
+			else :
+				w.write("]")
+
+		w.write("]")
+
+	finally:
+		w.close()
+
+	
 data = load_csv("export.csv")
 del data[0]
 
-data_json = extract_json(data)
+display_data = extract_data(data)
 
-print data_json.decode("iso-8859-2")
+write_json("node/data.json", display_data)
 
-f = open("node/data.json", "w")
-try:
-	f.write(data_json) # Write a json to a file
-finally:
-	f.close()
+
