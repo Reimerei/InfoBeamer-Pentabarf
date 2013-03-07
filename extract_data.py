@@ -6,9 +6,14 @@
 ###########################################################
 
 import csv
-import json
 import datetime
-import codecs
+import textwrap
+
+
+max_title = 40
+max_subtitle = 40
+max_author = 40
+
 
 # parses csv file and returns array with data
 def load_csv(filename):
@@ -86,7 +91,12 @@ def extract_data(data) :
 
 			if now >= start and now <= end :
 
-				display_row = [row[9], row[1], row[2], row[5], start.strftime('%H:%M'), end.strftime('%H:%M')]
+				title = textwrap.wrap(row[1], max_title)
+				subtitle = textwrap.wrap(row[2], max_title)
+				speakers = row[5].split(",")
+
+				display_row = [row[9], title, subtitle, speakers, start.strftime('%H:%M'), end.strftime('%H:%M')]
+
 				display_data.append(display_row)
 
 		else :
@@ -99,29 +109,48 @@ def extract_data(data) :
 
 def write_json(filename, data):
 
-	#w = codecs.open(filename , "w", "utf-8")
 	w = open(filename, "w")
-
-	#writer = codecs.getwriter('utf-8')(file(filename,'w'))
 
 	try:
 
-		w.write("[")
-
+		w.write("[" + str(len(display_data)) + ", ")
 		l=0
 
 		for line in data :
 
-			w.write("[")
+			w.write("[")			
 
 			c=0
 			for cell in line :
 
+				cell_str = ""
+
+				if isinstance(cell, list) and len(cell) > 0:
+
+					cell_str = cell_str + "[" + str(len(cell)) + ", "
+
+					e=0
+					for elem in cell:
+
+						e += 1
+						if e < len(cell) :
+							cell_str = cell_str + "\"" + elem + "\", "
+						else :
+							cell_str = cell_str + "\"" + elem + "\""
+
+					cell_str = cell_str + "]"
+
+				elif len(cell) > 0:
+					cell_str = "\"" + cell + "\""
+
+				else :
+					cell_str = "\"\""
+
 				c += 1
 				if c < len(line) :
-					w.write("\"" + cell + "\", ")
+					w.write(cell_str + ", ")
 				else :
-					w.write("\"" + cell + "\"")
+					w.write(cell_str)
 
 			l += 1
 			if l < len(data) :
@@ -141,5 +170,4 @@ del data[0]
 display_data = extract_data(data)
 
 write_json("node/data.json", display_data)
-
 
