@@ -8,11 +8,11 @@
 import csv
 import datetime
 import textwrap
+import os
+import time
 
-
-max_title = 40
-max_subtitle = 40
-max_author = 40
+max_title = 60
+max_subtitle = 140
 
 
 # parses csv file and returns array with data
@@ -73,8 +73,8 @@ def extract_data(data) :
 
 	row_count = 0
 
-	#now = datetime.datetime.now()
-	now = datetime.datetime(2013, 03, 13, 18, 0)
+	now = datetime.datetime.now()
+	#now = datetime.datetime(2013, 03, 11, 10, 31)
 	print "The time is " + str(now)
 
 	for row in data :
@@ -91,21 +91,32 @@ def extract_data(data) :
 
 			if now >= start and now <= end :
 
-				title = textwrap.wrap(row[1], max_title)
-				subtitle = textwrap.wrap(row[2], max_title)
-				speakers = row[5].split(",")
+				title = textwrap.wrap(clean(row[1]), max_title)
+				subtitle = textwrap.wrap(clean(row[2]), max_title)
+				speakers = row[5].split(", ")
 
-				display_row = [row[9], title, subtitle, speakers, start.strftime('%H:%M'), end.strftime('%H:%M')]
+				display_row = [clean(row[9]), title, subtitle, speakers, clean(start.strftime('%H:%M')), clean(end.strftime('%H:%M'))]
 
 				display_data.append(display_row)
 
-		else :
-
-			print "Invalid row: " + str(row_count)
+		#else :
+			#print "Invalid row: " + str(row_count)
 
 		row_count += 1
 
 	return display_data
+
+def clean(string):
+	ret = string.replace("\"", "")
+	ret = ret.replace("\'", "")
+	ret = ret.replace("AUSGEBUCHT!!! ", "")
+	ret = ret.replace("AUSGEBUCHT!!!", "")
+
+	if len(ret) == 0 :
+		ret = " "
+
+	return ret
+
 
 def write_json(filename, data):
 
@@ -113,7 +124,11 @@ def write_json(filename, data):
 
 	try:
 
-		w.write("[" + str(len(display_data)) + ", ")
+		w.write("[" + str(len(display_data)))
+
+		if len(display_data) > 0 :
+			w.write(", ")
+
 		l=0
 
 		for line in data :
@@ -125,18 +140,22 @@ def write_json(filename, data):
 
 				cell_str = ""
 
-				if isinstance(cell, list) and len(cell) > 0:
+				if isinstance(cell, list):
 
-					cell_str = cell_str + "[" + str(len(cell)) + ", "
+					cell_str = cell_str + "[" + str(len(cell))
+
+					if len(cell) > 0 :
+						cell_str = cell_str + ", "
 
 					e=0
 					for elem in cell:
 
+						cell_str = cell_str + "\"" + elem + "\""
+
 						e += 1
 						if e < len(cell) :
-							cell_str = cell_str + "\"" + elem + "\", "
-						else :
-							cell_str = cell_str + "\"" + elem + "\""
+							 cell_str = cell_str + ", "
+						
 
 					cell_str = cell_str + "]"
 
@@ -144,7 +163,7 @@ def write_json(filename, data):
 					cell_str = "\"" + cell + "\""
 
 				else :
-					cell_str = "\"\""
+					cell_str = "\" \""
 
 				c += 1
 				if c < len(line) :
@@ -163,11 +182,20 @@ def write_json(filename, data):
 	finally:
 		w.close()
 
+#os.system("INFOBEAMER_FULLSCREEN=1 info-beamer node/")
+os.system("info-beamer node/ &")
+
+while(1==1) :
 	
-data = load_csv("export.csv")
-del data[0]
+	data = load_csv("events.csv")
+	del data[0]
 
-display_data = extract_data(data)
+	display_data = extract_data(data)
 
-write_json("node/data.json", display_data)
+	write_json("node/data.json", display_data)
+
+	print "Extraction finished"
+
+	time.sleep(30)
+
 
