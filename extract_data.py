@@ -182,8 +182,8 @@ def write_json(filename, data):
 	finally:
 		w.close()
 
-#os.system("INFOBEAMER_FULLSCREEN=1 info-beamer node/")
-os.system("info-beamer node/ &")
+os.system("INFOBEAMER_FULLSCREEN=1 info-beamer node/")
+#os.system("info-beamer node/ &")
 
 while(1==1) :
 	
