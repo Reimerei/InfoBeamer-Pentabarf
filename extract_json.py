@@ -10,10 +10,10 @@ import datetime
 import textwrap
 import os
 import time
+import json
 
 max_title = 60
 max_subtitle = 140
-
 
 # parses csv file and returns array with data
 def load_csv(filename):
@@ -23,18 +23,35 @@ def load_csv(filename):
 	reader = None
 	data = []
 
+
 	try:
 		reader = csv.reader(file)
 
-		for row in reader:
+		for i, row in enumerate(reader):
 
-			data.append(row)
+			date = row[7].split('-')
+			time = row[8].split(':')
+			duration = row[10].split(':')
+
+			if len(date) == 3 and len(time) == 3 and len(duration) == 3:
+
+				nrow = {}
+				nrow['start'] = datetime.datetime(int(date[0]), int(date[1]), int(date[2]), int(time[0]), int(time[1]))
+				nrow['end'] = nrow['start'] + datetime.timedelta(hours = int(duration[0]), minutes = int(duration[1]))
+				nrow['speakers'] = row[5]
+				nrow['room'] = row[9]
+				nrow['title'] = row[1]
+				nrow['subtitle'] = row[2]
+
+				data.append(nrow)
+			else :
+				print "Invalid row" + str(i)
 		
 	finally:
 		file.close()
 
 	#sort users by invite_code
-	return data
+	return sorted(data, key=lambda x: x['room'])
 
 # Columns in pentabarf export
 #0	ID
@@ -64,47 +81,59 @@ def load_csv(filename):
 #1	Event title
 #2	Subtitle of the event
 #3	Speakers
-#5	Start time
-#6	End Time
+#4	Start time
+#5	End Time
+#6	next Event title
+#7	next Subtitle of the event
+#8	next Speakers
+#9	next Start time
+#10	next End Time
 
-def extract_data(data) :
-
-	display_data = []
-
-	row_count = 0
+def get_current_events(data) :
 
 	#now = datetime.datetime.now()
-	now = datetime.datetime(2013, 06, 14, 17, 01)
+	now = datetime.datetime(2013, 06, 14, 11, 01)
 	print "The time is " + str(now)
 
+	current_events = []
+
+	# find events that are currently running
 	for row in data :
 
-		# check date
-		date = row[7].split('-')
-		time = row[8].split(':')
-		duration = row[10].split(':')
+		if now >= row['start'] and now <= row['end'] :
 
-		if len(date) == 3 and len(time) == 3 and len(duration) == 3:
+			rowj = {}
 
-			start = datetime.datetime(int(date[0]), int(date[1]), int(date[2]), int(time[0]), int(time[1]))
-			end = start + datetime.timedelta(hours = int(duration[0]), minutes = int(duration[1]))
+			rowj['title'] = textwrap.wrap(clean(row['title']), max_title)
+			rowj['subtitle'] = textwrap.wrap(clean(row['subtitle']), max_subtitle)
+			rowj['speakers'] = row['speakers'].split(", ")
+			rowj['room'] = clean(row['room'])[:2]
+			rowj['start'] = row['start'].strftime('%H:%M')
+			rowj['end'] = row['end'].strftime('%H:%M')
+			rowj['titlen'] = [""]
+			rowj['startn'] = ""
 
-			if now >= start and now <= end :
+			# find next event
+			for rown in data :
 
-				title = textwrap.wrap(clean(row[1]), max_title)
-				subtitle = textwrap.wrap(clean(row[2]), max_title)
-				speakers = row[5].split(", ")
+				starte = row['start'].replace(hour=23, minute=59)
 
-				display_row = [clean(row[9]), title, subtitle, speakers, clean(start.strftime('%H:%M')), clean(end.strftime('%H:%M'))]
+				if row['room'] == rown['room'] :
 
-				display_data.append(display_row)
+					if rown['start'].date() == row['start'].date() and rown['start'] >= row['end'] :
+						# we have an event that happens later this day, now save the earliest only
+						if  rown['start'] < starte :
+							starte = rown['start']	
 
-		#else :
-			#print "Invalid row: " + str(row_count)
+							rowj['titlen'] = textwrap.wrap(clean(rown['title']), max_title)
+							rowj['subtitlen'] = textwrap.wrap(clean(rown['subtitle']), max_subtitle)
+							rowj['speakersn'] = rown['speakers'].split(", ")
+							rowj['startn'] = rown['start'].strftime('%H:%M')
+							rowj['endn'] = rown['end'].strftime('%H:%M')
 
-		row_count += 1
+			current_events.append(rowj)		
 
-	return display_data
+	return current_events
 
 def clean(string):
 	ret = string.replace("\"", "")
@@ -120,64 +149,32 @@ def clean(string):
 
 def write_json(filename, data):
 
+	js = "["
+
+	for event in data :
+
+		js += ",{" 
+
+		for key, value in event.iteritems() :
+
+			js += ",\"%s\": " % key
+
+			if isinstance(value, list) :
+				js += "["
+				for item in value :
+					js += ", \"%s\"" % item
+
+				js += "]"
+			else :
+				js += "\"%s\"" % value		
+
+		js += "}"
+	js += "]"
+
 	w = open(filename, "w")
 
 	try:
-
-		w.write("[" + str(len(data)))
-
-		if len(data) > 0 :
-			w.write(", ")
-
-		l=0
-
-		for line in data :
-
-			w.write("[")			
-
-			c=0
-			for cell in line :
-
-				cell_str = ""
-
-				if isinstance(cell, list):
-
-					cell_str = cell_str + "[" + str(len(cell))
-
-					if len(cell) > 0 :
-						cell_str = cell_str + ", "
-
-					e=0
-					for elem in cell:
-
-						cell_str = cell_str + "\"" + elem + "\""
-
-						e += 1
-						if e < len(cell) :
-							 cell_str = cell_str + ", "
-						
-
-					cell_str = cell_str + "]"
-
-				elif len(cell) > 0:
-					cell_str = "\"" + cell + "\""
-
-				else :
-					cell_str = "\" \""
-
-				c += 1
-				if c < len(line) :
-					w.write(cell_str + ", ")
-				else :
-					w.write(cell_str)
-
-			l += 1
-			if l < len(data) :
-				w.write("], ")
-			else :
-				w.write("]")
-
-		w.write("]")
+		w.write(js)
 
 	finally:
 		w.close()
@@ -185,23 +182,27 @@ def write_json(filename, data):
 #os.system("INFOBEAMER_FULLSCREEN=1 info-beamer node/")
 #os.system("info-beamer node/ &")
 
-
-	
 csv = load_csv("events.csv")
 del csv[0]
 
-data = extract_data(csv)
+events = get_current_events(csv)
+
 k_data = []
 r_data = []
 
-for room in data :
-	if room[0].startswith("R") :
-		r_data.append(room)
-	elif room[0].startswith("K") :
-		k_data.append(room)
+for row in events :
+
+	if row['room'].startswith("R") :
+		r_data.append(row)
+	elif row['room'].startswith("K") :
+		k_data.append(row)
 
 write_json("node/r_room.json", r_data)
 write_json("node/k_room.json", k_data)
+
+
+#write_json("node/r_room.json", r_data)
+#write_json("node/k_room.json", k_data)
 
 
 print "Extraction finished"

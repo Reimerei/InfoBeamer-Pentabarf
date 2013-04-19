@@ -1,26 +1,39 @@
-gl.setup(1920, 1440)
+gl.setup(1920, 1080)
 
-font = resource.load_font("OpenSans-Regular.ttf")
-font_bold = resource.load_font("OpenSans-Bold.ttf")
-font_italic = resource.load_font("OpenSans-Italic.ttf")
+font = resource.load_font("MetaOffc-Norm.ttf")
+font_bold = resource.load_font("MetaOffc-Bold.ttf")
+font_italic = resource.load_font("MetaOffc-NormIta.ttf")
+font_bold_italic = resource.load_font("MetaOffc-BoldIta.ttf")
 
-yellow =  resource.load_image("yellow.png")
-
-font_r = 75 / 255
-font_g = 75 / 255
-font_b = 74 / 255
+font_r = 0
+font_g = 0
+font_b = 0
 font_a = 1
 
-slide_delay=7 -- seconds
+font_red_r = 192 / 255
+font_red_g = 7 / 255
+font_red_b = 31 / 255
+font_red_a = 1
 
--- Logo
+-- logo
 logo = resource.load_image("logo.png")
+bg = resource.load_image("bg.png")
+line_v = resource.load_image("line_v.png")
+line_h = resource.load_image("line_h.png")
 
 -- load json with data
 json = require "json"
 
-util.file_watch("data.json", function(content)
-    talks = json.decode(content)
+util.file_watch("k_room.json", function(content)
+    k_room = json.decode(content)
+end)
+
+util.file_watch("r_room.json", function(content)
+    r_room = json.decode(content)
+end)
+
+util.file_watch("time.json", function(content)
+    time = json.decode(content)
 end)
 
 -- invoke the autoloader
@@ -30,92 +43,110 @@ function node.render()
 	
 	gl.clear(255, 255, 255, 1) -- white
 
-    yellow:draw(0, 0, WIDTH, 60)
+    bg:draw(0, 0, WIDTH, HEIGHT)
 
-    logo:draw(30, 90, 230, 290)
+    -- Everything on the right
+    rx = 1400
+    ry = 75
 
-    font_bold:write(270, 130, "LiMA13  FAIR | ÄNDERN ", 60, font_r, font_g, font_b, font_a)
-    font_italic:write(270, 200, "Deutschlands größter linksalternativer Medienkongress", 50, font_r, font_g, font_b, font_a)
+    line_v:draw(rx, 40, rx + 7, HEIGHT - 40)
 
-    --font:write(50, 230, "Programm", 60, font_r, font_g, font_b, font_a)
+    rx = rx + 40
 
-    slide_cnt = math.floor((sys.now() / (slide_delay / 2 )))
+    logo_x = rx
+    logo_scale = 1.5
+    logo:draw(logo_x, ry, logo_x + (293 * logo_scale) , ry + (103 * logo_scale) )
 
-    slide_num = math.floor((slide_cnt % talks[1]) / 2) *  2  + 2
+    ry = ry + (103 * logo_scale) + 50
     
-    if slide_num > 1
-    then  	    
-	    if slide_num <= talks[1]+1
-	    then
-	    	render_slot(50, 350, slide_num)
-	    end
-	    if slide_num+1 <= talks[1]+1
-	    then
-	    	render_slot(50, 900, slide_num + 1)
-	    end
-	else
-		font_bold:write(500, 700, "Kein Programm" , 100, font_r, font_g, font_b, font_a)
-	end
-end
+    line_h:draw(rx, ry, WIDTH - 40, ry + 7)
 
-function render_slot(pos_x, pos_y, n)
-	-- Columns in json-data
-	--1 Room
-	--2	Event title
-	--3	Subtitle of the event
-	--4	Speakers
-	--5	Start time
-	--6	End Time
-	
-	yellow:draw(pos_x, pos_y, pos_x + 600, pos_y + 70)
+    ry = ry + 40
 
-    font_bold:write(pos_x + 10, pos_y + 12 , talks[n][1], 50, font_r, font_g, font_b, font_a)
+    font_bold:write(rx, ry, time, 175, font_red_r, font_red_g, font_red_b, font_red_a)
 
-    --font:write(pos_x + 650, pos_y + 12 , talks[n][5] .. " bis " .. talks[n][6], 50, font_r, font_g, font_b, font_a)
-    font:write(pos_x + 650, pos_y + 12 , "bis " .. talks[n][6], 50, font_r, font_g, font_b, font_a)
+    ry = ry + 220
 
-    pos = pos_y + 100
-    if talks[n][2][1] > 0 
-    then
-	    font_bold:write(pos_x + 50, pos, talks[n][2][2], 50, font_r, font_g, font_b, font_a)
-	end
-	    pos = pos + 60
+	line_h:draw(rx, ry, WIDTH - 40, ry + 7)
 
-    if talks[n][2][1] > 1 
-    then
-	    font_bold:write(pos_x + 50, pos, talks[n][2][3], 50, font_r, font_g, font_b, font_a)
-    	pos = pos + 60
-	end
+	ry = ry + 60
 
-	if talks[n][3][1] > 0 
-    then
-		font_italic:write(pos_x + 50, pos , talks[n][3][2], 45, font_r, font_g, font_b, font_a)
-	end
-    pos = pos + 45
+	font_bold:write(rx, ry, "R-Räume", 50, font_r, font_g, font_b, font_a)
 
-	if talks[n][3][1] > 1 
-    then
-	    font_italic:write(pos_x + 50, pos, talks[n][3][3], 45, font_r, font_g, font_b, font_a)
-    	pos = pos + 45
-	end	
-	pos = pos + 30
+	ry = ry + 80
 
-	if talks[n][4][1] > 0
-    then
-    	font:write(pos_x + 50, pos , talks[n][4][2], 50, font_r, font_g, font_b, font_a)
+	for i, event in ipairs(r_room)
+	do
+    	font_bold:write(rx, ry, event.room, 30 , font_red_r, font_red_g, font_red_b, font_red_a)
+    	
+    	for j, title in ipairs(event.title)
+    	do
+    		font:write(rx + 50, ry, title, 30 , font_red_r, font_red_g, font_red_b, font_red_a)
+    		ry = ry + 35
+    	end    	
+
+    	if event.startn  ~= ""
+    	then
+    		font:write(rx, ry, "ab " .. event.startn,  25, font_r, font_g, font_b, font_a)
+
+    		for j, title in ipairs(event.titlen)
+        	do
+        		font:write(rx + 120, ry, title, 25, font_r, font_g, font_b, font_a)
+        		ry = ry + 20
+        	end
+
+    	end
+
+    	ry = ry + 25
+    	
+        
     end
-    pos = pos + 55
-    
-    if talks[n][4][1] > 1 
-    then
-	    font:write(pos_x + 50, pos , talks[n][4][3], 50, font_r, font_g, font_b, font_a)
-    	pos = pos + 55
-	end
 
-	if talks[n][4][1] > 2 
-    then
-	    font:write(pos_x + 50, pos , "...", 50, font_r, font_g, font_b, font_a)
-    	pos = pos + 55
-	end
+    -- Main Window
+
+    x = 60
+    y = 60
+
+    font_bold:write(x, y, "K-Räume", 130, font_r, font_g, font_b, font_a)
+
+    y = y + 170
+
+    for i, event in ipairs(k_room)
+	do
+    	if 1 == 1
+    	then
+
+	    	font_bold:write(x, y, event.room, 60 , font_red_r, font_red_g, font_red_b, font_red_a)	    	
+	    	
+	    	for j, title in ipairs(event.title)
+	    	do
+	    		font:write(x + 100, y, title, 60 , font_red_r, font_red_g, font_red_b, font_red_a)
+	    		y = y + 63
+	    	end	    	
+
+	    	if event.startn  ~= ""
+	    	then
+	    		font:write(x, y, "ab " .. event.startn,  50, font_r, font_g, font_b, font_a)
+
+	    		for j, title in ipairs(event.titlen)
+	        	do
+	        		font:write(x + 250, y, title, 50, font_r, font_g, font_b, font_a)
+	        		y = y + 40
+	        	end
+
+	    	end
+
+	    	y = y + 40
+	    end
+    end    
+
+    -- Bottom
+
+    bx = x
+    by = HEIGHT - 200
+
+    line_h:draw(40, by, rx - 80, by + 7)
+
+   
 end
 
