@@ -12,7 +12,8 @@ import os
 import time
 import json
 
-max_title = 60
+max_title_k = 38
+max_title_r = 35
 max_subtitle = 140
 
 # parses csv file and returns array with data
@@ -92,46 +93,72 @@ def load_csv(filename):
 def get_current_events(data) :
 
 	#now = datetime.datetime.now()
-	now = datetime.datetime(2013, 06, 14, 11, 01)
+	now = datetime.datetime(2013, 06, 14, 15, 01)
 	print "The time is " + str(now)
 
 	current_events = []
 
 	# find events that are currently running
-	for row in data :
+	for room in {"K1", "K3", "K6", "K7", "R1", "R2", "R3", "R4"} :
+		
+		rowj = {}
+		rowj['room'] = room
 
-		if now >= row['start'] and now <= row['end'] :
+		event_end = now
 
-			rowj = {}
+		for row in data :
 
-			rowj['title'] = textwrap.wrap(clean(row['title']), max_title)
-			rowj['subtitle'] = textwrap.wrap(clean(row['subtitle']), max_subtitle)
-			rowj['speakers'] = row['speakers'].split(", ")
-			rowj['room'] = clean(row['room'])[:2]
-			rowj['start'] = row['start'].strftime('%H:%M')
-			rowj['end'] = row['end'].strftime('%H:%M')
+			if row['room'].startswith(room) and now >= row['start'] and now <= row['end'] :				
+
+				# wrap text
+				max_title = max_title_k
+				if rowj['room'].startswith("R") :
+					max_title = max_title_r
+
+				rowj['title'] = textwrap.wrap(clean(row['title']), max_title)
+				rowj['subtitle'] = textwrap.wrap(clean(row['subtitle']), 100)
+				rowj['speakers'] = row['speakers'].split(", ")
+				rowj['start'] = row['start'].strftime('%H:%M')
+				rowj['end'] = row['end'].strftime('%H:%M')
+
+				event_end = row['end']
+				break
+
+		# find next event
+		for row in data :
+
+			starte = row['start'].replace(hour=23, minute=59)
+
+			if row['room'].startswith(room) :
+
+				if row['start'].date() == now.date() and row['start'] >= event_end :
+					# we have an event that happens later this day, now save the earliest only
+					if  row['start'] < starte :
+						starte = row['start']	
+
+						rowj['titlen'] = textwrap.wrap(clean(row['title']), max_title)
+						rowj['subtitlen'] = textwrap.wrap(clean(row['subtitle']), max_subtitle)
+						rowj['speakersn'] = row['speakers'].split(", ")
+						rowj['startn'] = row['start'].strftime('%H:%M')
+						rowj['endn'] = row['end'].strftime('%H:%M')
+
+		# create placeholders if there is no event
+		if "title" not in rowj :
+			rowj['title'] = ["Pause"]
+			rowj['subtitle'] = [""]
+			rowj['speakers'] = [""]
+			rowj['start'] = now.strftime('%H:%M')
+			rowj['end'] = now.strftime('%H:%M')
+
+		if "titlen" not in rowj :
 			rowj['titlen'] = [""]
+			rowj['subtitlen'] = [""]
+			rowj['speakersn'] = [""]
 			rowj['startn'] = ""
+			rowj['endn'] = ""
 
-			# find next event
-			for rown in data :
 
-				starte = row['start'].replace(hour=23, minute=59)
-
-				if row['room'] == rown['room'] :
-
-					if rown['start'].date() == row['start'].date() and rown['start'] >= row['end'] :
-						# we have an event that happens later this day, now save the earliest only
-						if  rown['start'] < starte :
-							starte = rown['start']	
-
-							rowj['titlen'] = textwrap.wrap(clean(rown['title']), max_title)
-							rowj['subtitlen'] = textwrap.wrap(clean(rown['subtitle']), max_subtitle)
-							rowj['speakersn'] = rown['speakers'].split(", ")
-							rowj['startn'] = rown['start'].strftime('%H:%M')
-							rowj['endn'] = rown['end'].strftime('%H:%M')
-
-			current_events.append(rowj)		
+		current_events.append(rowj)		
 
 	return current_events
 
@@ -191,7 +218,6 @@ k_data = []
 r_data = []
 
 for row in events :
-
 	if row['room'].startswith("R") :
 		r_data.append(row)
 	elif row['room'].startswith("K") :
@@ -199,11 +225,6 @@ for row in events :
 
 write_json("node/r_room.json", r_data)
 write_json("node/k_room.json", k_data)
-
-
-#write_json("node/r_room.json", r_data)
-#write_json("node/k_room.json", k_data)
-
 
 print "Extraction finished"
 

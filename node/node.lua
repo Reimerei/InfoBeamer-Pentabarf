@@ -36,6 +36,28 @@ util.file_watch("time.json", function(content)
     time = json.decode(content)
 end)
 
+util.file_watch("tweets.json", function(content)
+    
+    tweets = {}
+
+    for i, tweet in ipairs(json.decode(content))
+    do
+    	tweets[#tweets + 1] = "@" .. tweet.user .. ": " .. tweet.text
+	end
+end)
+
+function tweet_feeder()
+    return tweets
+end
+
+tweet_text = util.running_text{
+    font = font;
+    size = 50;
+    speed = 240;
+    color = {font_r, font_g, font_b, font_a};
+    generator = util.generator(tweet_feeder)
+}
+
 -- invoke the autoloader
 util.auto_loader(_G)
 
@@ -46,30 +68,30 @@ function node.render()
     bg:draw(0, 0, WIDTH, HEIGHT)
 
     -- Everything on the right
-    rx = 1400
-    ry = 75
+    rx = 1300
+    ry = 60
 
-    line_v:draw(rx, 40, rx + 7, HEIGHT - 40)
+    line_v:draw(rx, 40, rx + 7, HEIGHT - 90)
 
     rx = rx + 40
 
-    logo_x = rx
-    logo_scale = 1.5
+    logo_x = rx + 30
+    logo_scale = 1.6
     logo:draw(logo_x, ry, logo_x + (293 * logo_scale) , ry + (103 * logo_scale) )
 
-    ry = ry + (103 * logo_scale) + 50
+    ry = ry + (103 * logo_scale) + 30
     
     line_h:draw(rx, ry, WIDTH - 40, ry + 7)
 
     ry = ry + 40
 
-    font_bold:write(rx, ry, time, 175, font_red_r, font_red_g, font_red_b, font_red_a)
+    font_bold:write(rx + 10, ry, time, 200, font_red_r, font_red_g, font_red_b, font_red_a)
 
     ry = ry + 220
 
 	line_h:draw(rx, ry, WIDTH - 40, ry + 7)
 
-	ry = ry + 60
+	ry = ry + 40
 
 	font_bold:write(rx, ry, "R-Räume", 50, font_r, font_g, font_b, font_a)
 
@@ -143,9 +165,14 @@ function node.render()
     -- Bottom
 
     bx = x
-    by = HEIGHT - 200
+    by = HEIGHT - 120
 
-    line_h:draw(40, by, rx - 80, by + 7)
+    --line_h:draw(40, by, rx - 80, by + 7)
+
+    by = by + 50
+
+    tweet_text:draw(by)
+
 
    
 end
