@@ -73,8 +73,8 @@ def extract_data(data) :
 
 	row_count = 0
 
-	now = datetime.datetime.now()
-	#now = datetime.datetime(2013, 03, 11, 10, 31)
+	#now = datetime.datetime.now()
+	now = datetime.datetime(2013, 06, 14, 17, 01)
 	print "The time is " + str(now)
 
 	for row in data :
@@ -124,9 +124,9 @@ def write_json(filename, data):
 
 	try:
 
-		w.write("[" + str(len(display_data)))
+		w.write("[" + str(len(data)))
 
-		if len(display_data) > 0 :
+		if len(data) > 0 :
 			w.write(", ")
 
 		l=0
@@ -182,20 +182,28 @@ def write_json(filename, data):
 	finally:
 		w.close()
 
-os.system("INFOBEAMER_FULLSCREEN=1 info-beamer node/")
+#os.system("INFOBEAMER_FULLSCREEN=1 info-beamer node/")
 #os.system("info-beamer node/ &")
 
-while(1==1) :
+
 	
-	data = load_csv("events.csv")
-	del data[0]
+csv = load_csv("events.csv")
+del csv[0]
 
-	display_data = extract_data(data)
+data = extract_data(csv)
+k_data = []
+r_data = []
 
-	write_json("node/data.json", display_data)
+for room in data :
+	if room[0].startswith("R") :
+		r_data.append(room)
+	elif room[0].startswith("K") :
+		k_data.append(room)
 
-	print "Extraction finished"
+write_json("node/r_room.json", r_data)
+write_json("node/k_room.json", k_data)
 
-	time.sleep(30)
+
+print "Extraction finished"
 
 
