@@ -2,3 +2,4 @@
 *.json
 *.ipr
 *.iws
+*.pyc
