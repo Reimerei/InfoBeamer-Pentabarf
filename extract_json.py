@@ -93,7 +93,7 @@ def load_csv(filename):
 def get_current_events(data) :
 
 	#now = datetime.datetime.now()
-	now = datetime.datetime(2013, 06, 14, 15, 01)
+	now = datetime.datetime(2013, 06, 15, 14, 30)
 	print "The time is " + str(now)
 
 	current_events = []
@@ -223,9 +223,9 @@ for row in events :
 	elif row['room'].startswith("K") :
 		k_data.append(row)
 
-write_json("node/r_room.json", r_data)
-write_json("node/k_room.json", k_data)
+full_path = os.path.realpath(__file__)
+
+write_json(os.path.dirname(full_path) +"/node/r_room.json", r_data)
+write_json(os.path.dirname(full_path) +"/node/k_room.json", k_data)
 
 print "Extraction finished"
-
-
