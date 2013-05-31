@@ -93,7 +93,7 @@ def load_csv(filename):
 def get_current_events(data) :
 
 	#now = datetime.datetime.now()
-	now = datetime.datetime(2013, 06, 15, 14, 30)
+	now = datetime.datetime(2013, 06, 15, 11, 30)
 	print "The time is " + str(now)
 
 	current_events = []

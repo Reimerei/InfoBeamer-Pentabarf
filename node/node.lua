@@ -42,7 +42,7 @@ util.file_watch("tweets.json", function(content)
 
     for i, tweet in ipairs(json.decode(content))
     do
-    	tweets[#tweets + 1] = tweet.text .. " -- "
+    	tweets[#tweets + 1] = tweet.text 
 	end
 end)
 
