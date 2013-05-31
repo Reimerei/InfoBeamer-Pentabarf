@@ -7,11 +7,10 @@ import urllib
 import datetime
 import os
 from cStringIO import StringIO
-from PIL import Image
 
 api = twitter.Api(debugHTTP=True,use_gzip_compression=True)
 
-tweets = [dict(
+tweets_search = [dict(
     user = tweet.user.screen_name,
     text = tweet.text,
     image = tweet.user.profile_image_url,
@@ -26,7 +25,18 @@ tweets = [dict(
     )
 ]
 
-tweets = sorted(tweets, key=lambda x: x['sec'])
+tweets_user = [dict(
+    text = tweet.text,
+    time = datetime.datetime.fromtimestamp(tweet.created_at_in_seconds).strftime("%H:%M"),
+    sec = tweet.created_at_in_seconds,
+    ) for tweet in api.GetUserTimeline(
+        id = sys.argv[1],
+        count = 5,
+	include_rts = True,
+    )]
+
+
+tweets = sorted(tweets_user, key=lambda x: x['sec'])
 
 for n, tweet in enumerate(tweets):
 #    img = "profile%02d" % (n+1)

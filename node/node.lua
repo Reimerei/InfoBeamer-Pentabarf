@@ -42,7 +42,7 @@ util.file_watch("tweets.json", function(content)
 
     for i, tweet in ipairs(json.decode(content))
     do
-    	tweets[#tweets + 1] = "@" .. tweet.user .. ": " .. tweet.text
+    	tweets[#tweets + 1] = tweet.text .. " -- "
 	end
 end)
 
@@ -53,7 +53,7 @@ end
 tweet_text = util.running_text{
     font = font;
     size = 50;
-    speed = 240;
+    speed = 100;
     color = {font_r, font_g, font_b, font_a};
     generator = util.generator(tweet_feeder)
 }
