@@ -92,8 +92,8 @@ def load_csv(filename):
 
 def get_current_events(data) :
 
-	#now = datetime.datetime.now()
-	now = datetime.datetime(2013, 06, 15, 11, 30)
+	now = datetime.datetime.now()
+	#now = datetime.datetime(2013, 06, 15, 11, 30)
 	print "The time is " + str(now)
 
 	current_events = []
@@ -124,17 +124,21 @@ def get_current_events(data) :
 				event_end = row['end']
 				break
 
+		starte = row['start'].replace(hour=23, minute=59)
+
 		# find next event
 		for row in data :
 
-			starte = row['start'].replace(hour=23, minute=59)
 
 			if row['room'].startswith(room) :
 
+
 				if row['start'].date() == now.date() and row['start'] >= event_end :
 					# we have an event that happens later this day, now save the earliest only
+
 					if  row['start'] < starte :
-						starte = row['start']	
+
+						starte = row['start']
 
 						rowj['titlen'] = textwrap.wrap(clean(row['title']), max_title)
 						rowj['subtitlen'] = textwrap.wrap(clean(row['subtitle']), max_subtitle)

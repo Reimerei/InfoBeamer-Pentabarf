@@ -11,3 +11,5 @@ path = os.path.dirname(full_path) + "/node/time.json"
 w = open(path, "w")
 w.write(json.dumps(time))
 w.close
+
+os.system("./extract_json.py")
